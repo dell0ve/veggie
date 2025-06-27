@@ -1,0 +1,217 @@
+body {
+  font-family: 'Kanit', sans-serif;
+  background: linear-gradient(135deg, #f8f8ff 60%, #e1e1f7 100%);
+  margin: 0;
+  color: #222;
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(90deg, #4CAF50 60%, #8E24AA 100%);
+  color: #fff;
+  padding: 32px 0 20px 0;
+  text-align: center;
+  box-shadow: 0 4px 24px #8e24aa22;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard {
+  max-width: 500px;
+  margin: 40px auto 32px auto;
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 8px 32px #8e24aa22, 0 1.5px 8px #4caf5011;
+  padding: 40px 28px 32px 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.sensor-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #f3f3fa 80%, #e1e1f7 100%);
+  box-shadow: 0 2px 12px #4caf5011;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.sensor-card:hover {
+  box-shadow: 0 6px 24px #8e24aa33;
+  transform: translateY(-2px) scale(1.02);
+}
+
+.sensor-icon {
+  font-size: 40px;
+  margin-right: 18px;
+  color: #4CAF50;
+  filter: drop-shadow(0 2px 4px #8e24aa22);
+  transition: transform 0.3s cubic-bezier(.68,-0.55,.27,1.55);
+}
+
+.sensor-label {
+  flex: 1;
+  font-weight: bold;
+  color: #8E24AA;
+  letter-spacing: 0.5px;
+  font-size: 1.08em;
+}
+
+.sensor-value {
+  font-size: 1.4em;
+  color: #4CAF50;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px #8e24aa11;
+}
+
+.advice {
+  margin-top: 36px;
+  background: linear-gradient(90deg, #8E24AA11 80%, #4CAF5011 100%);
+  color: #8E24AA;
+  padding: 18px 20px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 1.13em;
+  font-weight: 500;
+  box-shadow: 0 2px 12px #8e24aa11;
+  transition: background 0.2s;
+}
+
+.advice .material-icons {
+  margin-right: 12px;
+  font-size: 1.4em;
+  color: #8E24AA;
+}
+
+.chart-container {
+  margin: 40px 0 0 0;
+  background: linear-gradient(90deg, #f3f3fa 80%, #e1e1f7 100%);
+  border-radius: 20px;
+  padding: 18px 10px 10px 10px;
+  box-shadow: 0 2px 12px #8e24aa11;
+  position: relative;
+  overflow: visible;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ข้อความตรงกลางกราฟวงกลม */
+.center-text {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translateY(-50%);
+  font-size: 2em;
+  font-weight: bold;
+  color: #4CAF50;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 2px 12px #8e24aa33, 0 1px 0 #fff;
+  animation: popCenterText 1.2s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate;
+}
+
+@keyframes popCenterText {
+  0% { transform: translateY(-50%) scale(1);}
+  100% { transform: translateY(-48%) scale(1.08);}
+}
+
+/* เอฟเฟกต์น้ำกระเพื่อมรอบกราฟ */
+.chart-container::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170px;
+  height: 170px;
+  background: radial-gradient(circle at 60% 40%, #8E24AA33 0%, #4CAF5011 80%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 0;
+  animation: waterWave 3s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes waterWave {
+  0% { box-shadow: 0 0 32px 8px #8E24AA33, 0 0 0 0 #4CAF5011; }
+  100% { box-shadow: 0 0 48px 16px #8E24AA44, 0 0 16px 8px #4CAF5011; }
+}
+
+/* เพิ่มเอฟเฟกต์ hover ให้กราฟ */
+.chart-container:hover {
+  box-shadow: 0 8px 32px #8e24aa44, 0 2px 16px #4caf5022;
+  background: linear-gradient(90deg, #e1e1f7 60%, #f3f3fa 100%);
+  transition: box-shadow 0.3s, background 0.3s;
+}
+
+.footer {
+  text-align: center;
+  color: #aaa;
+  margin: 40px 0 0 0;
+  font-size: 1em;
+  letter-spacing: 0.5px;
+}
+
+/* Navigation Bar */
+nav#main-nav {
+  background: linear-gradient(90deg, #4CAF50 60%, #8E24AA 100%);
+  color: #fff;
+  font-family: 'Kanit', sans-serif;
+  font-size: 1.1em;
+  padding: 10px 0;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  box-shadow: 0 2px 8px #8e24aa22;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#residueChart {
+  filter: drop-shadow(0 8px 24px #8e24aa33);
+  border-radius: 16px;
+  background: transparent;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .dashboard {
+    max-width: 98vw;
+    margin: 16px 1vw;
+    padding: 16px 2vw 16px 2vw;
+    border-radius: 18px;
+  }
+  .sensor-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .sensor-icon {
+    margin-bottom: 8px;
+    margin-right: 0;
+    font-size: 32px;
+  }
+  .chart-container {
+    padding: 8px 2px 2px 2px;
+    margin: 24px 0 0 0;
+    border-radius: 12px;
+    min-height: 120px;
+  }
+  header {
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    padding: 20px 0 12px 0;
+  }
+  .center-text {
+    font-size: 1.1em;
+  }
+}

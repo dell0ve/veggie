@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Veggie Analyzer</title>
+  <!-- Google Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="veg.css">
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav id="main-nav"></nav>
+  <header>
+    <span class="material-icons" style="font-size:48px;vertical-align:middle;">eco</span>
+    <h1 style="display:inline; margin-left:12px;">Veggie Analyzer</h1>
+    <div style="font-size:1.1em; margin-top:8px;">วิเคราะห์ผักปลอดภัยด้วยกราฟและ AI</div>
+  </header>
+  <div class="dashboard">
+    <div class="sensor-card">
+      <span class="material-icons sensor-icon">bolt</span>
+      <span class="sensor-label">แรงดันไฟฟ้า (V)</span>
+      <span class="sensor-value" id="voltage">-</span>
+    </div>
+    <div class="sensor-card">
+      <span class="material-icons sensor-icon" style="color:#8E24AA;">science</span>
+      <span class="sensor-label">สารตกค้าง (ppm)</span>
+      <span class="sensor-value" id="residue" style="color:#8E24AA;">-</span>
+    </div>
+    <div class="sensor-card">
+      <span class="material-icons sensor-icon" style="color:#7C4DFF;">thermostat</span>
+      <span class="sensor-label">อุณหภูมิ (°C)</span>
+      <span class="sensor-value" id="temperature" style="color:#7C4DFF;">-</span>
+    </div>
+    <div class="sensor-card">
+      <span class="material-icons sensor-icon" style="color:#009688;">center_focus_strong</span>
+      <span class="sensor-label">ระยะสแกน (cm)</span>
+      <span class="sensor-value" id="scan" style="color:#009688;">-</span>
+    </div>
+    <div class="advice" id="advice">
+      <span class="material-icons">info</span>
+      <span>กำลังโหลดข้อมูล...</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="residueChart" style="width:100%;max-width:400px;"></canvas>
+    </div>
+  </div>
+  <div class="footer">
+    &copy; 2024 Veggie Analyzer | UX/UI by GitHub Copilot
+  </div>
+  <!-- ปุ่มรีเฟรช, ปุ่ม Dark Mode, ใบไม้ลอย, Toast, Navigation, Animation -->
+  <script src="veggie.js"></script>
+  <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBedxy8BHEcvUrRTy5_yjtNtyuzAGzWjTI",
+    authDomain: "smart-veggie-scan.firebaseapp.com",
+    databaseURL: "https://smart-veggie-scan-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "smart-veggie-scan",
+    storageBucket: "smart-veggie-scan.appspot.com",
+    messagingSenderId: "39849520940",
+    appId: "1:39849520940:web:f5d2caaa57986adbd1c689"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ดึงข้อมูลล่าสุดจาก Realtime Database
+  function fetchLatest() {
+    db.ref('sensorData').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) {
+        document.getElementById('advice').innerHTML = `<span class="material-icons">info</span><span>ไม่มีข้อมูลล่าสุด</span>`;
+        return;
+      }
+      document.getElementById('voltage').textContent = data.voc !== undefined ? Number(data.voc).toFixed(2) : '-';
+      document.getElementById('residue').textContent = data.humidity !== undefined ? Number(data.humidity).toFixed(2) : '-';
+      document.getElementById('temperature').textContent = data.temperature !== undefined ? Number(data.temperature).toFixed(2) : '-';
+      document.getElementById('scan').textContent = data.distance !== undefined ? Number(data.distance).toFixed(2) : '-';
+
+      // วิเคราะห์
+      let advice = '';
+      if (data.level) {
+        advice = data.level;
+      } else if (data.humidity > 80) {
+        advice = 'ความชื้นสูง อาจต้องระวังเชื้อรา';
+      } else if (data.temperature > 35) {
+        advice = 'อุณหภูมิสูงเกินไป เก็บผักในที่เย็น';
+      } else {
+        advice = 'ผักปลอดภัย สามารถบริโภคได้';
+      }
+      document.getElementById('advice').innerHTML = `<span class="material-icons">info</span><span>${advice}</span>`;
+    });
+  }
+
+  // ฟังก์ชันใหม่สำหรับ Doughnut Chart
+  let doughnutChart;
+  function updateDoughnutChart(value, danger = 80) {
+    if (doughnutChart) doughnutChart.destroy();
+    const ctx = document.getElementById('residueChart').getContext('2d');
+    doughnutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['ค่าปัจจุบัน', 'ขีดอันตราย'],
+        datasets: [{
+          data: [Math.min(value, danger), Math.max(0, danger - value)],
+          backgroundColor: [
+            value >= danger ? '#e53935' : '#4CAF50',
+            '#e0e0e0'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (context.dataIndex === 0) {
+                  return `ค่าปัจจุบัน: ${value}`;
+                } else {
+                  return `ขีดอันตราย: ${danger}`;
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    // แสดงค่าตรงกลางกราฟ
+    setTimeout(() => {
+      const chartBox = ctx.canvas.parentNode;
+      let centerText = chartBox.querySelector('.center-text');
+      if (!centerText) {
+        centerText = document.createElement('div');
+        centerText.className = 'center-text';
+        centerText.style.position = 'absolute';
+        centerText.style.left = '0';
+        centerText.style.top = '50%';
+        centerText.style.width = '100%';
+        centerText.style.textAlign = 'center';
+        centerText.style.transform = 'translateY(-50%)';
+        centerText.style.fontSize = '1.6em';
+        centerText.style.fontWeight = 'bold';
+        centerText.style.color = value >= danger ? '#e53935' : '#4CAF50';
+        chartBox.style.position = 'relative';
+        chartBox.appendChild(centerText);
+      }
+      centerText.textContent = value;
+    }, 200);
+  }
+
+  // ปรับ fetchResidueHistory ให้แสดง Doughnut Chart
+  function fetchResidueHistory() {
+    db.ref('sensorData').on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
+      // สมมติใช้ humidity เป็นค่าหลัก
+      updateDoughnutChart(data.humidity ?? 0, 80); // 80 คือค่าขีดอันตราย
+    });
+  }
+
+  // ฟังก์ชันสำหรับเส้นกราฟความชื้น
+  let residueChart;
+  function updateResidueChart(labels, data) {
+    if (residueChart) residueChart.destroy();
+    const ctx = document.getElementById('residueChart').getContext('2d');
+
+    // สร้าง gradient สำหรับเส้นกราฟ
+    const gradient = ctx.createLinearGradient(0, 0, ctx.canvas.width, 0);
+    gradient.addColorStop(0, "#4CAF50");
+    gradient.addColorStop(1, "#8E24AA");
+
+    // สร้าง gradient สำหรับพื้นหลังกราฟ (wave effect)
+    const fillGradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+    fillGradient.addColorStop(0, "#8E24AA33");
+    fillGradient.addColorStop(1, "#4CAF5011");
+
+    residueChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'ความชื้น (Humidity)',
+          data: data,
+          borderColor: gradient,
+          backgroundColor: fillGradient,
+          tension: 0.45, // เพิ่มความโค้งให้เหมือนคลื่น
+          pointRadius: 4,
+          pointBackgroundColor: "#fff",
+          pointBorderColor: gradient,
+          fill: true,
+          borderWidth: 4,
+          shadowOffsetX: 0,
+          shadowOffsetY: 4,
+          shadowBlur: 10,
+          shadowColor: "#8E24AA33"
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        elements: {
+          line: {
+            borderJoinStyle: 'round',
+          }
+        },
+        scales: {
+          x: { display: false },
+          y: { beginAtZero: true }
+        },
+        animation: {
+          duration: 1800,
+          easing: 'easeInOutSine'
+        }
+      }
+    });
+  }
+
+  fetchLatest();
+  fetchResidueHistory();
+</script>
+</body>
+</html>
